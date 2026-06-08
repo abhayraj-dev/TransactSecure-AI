@@ -1,0 +1,20 @@
+# Python environment and cache
+venv/
+env/
+__pycache__/
+*.py[cod]
+.env
+
+# Node/React dependencies and builds
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+.npm
+
+# Data files (Protects GitHub from large datasets)
+*.csv
+creditcard.csv
+
+# System files
+.DS_Store
+Thumbs.db

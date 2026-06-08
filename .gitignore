@@ -1,0 +1,11 @@
+venv/
+env/
+.env
+
+__pycache__/
+*.py[cod]
+
+creditcard.csv
+
+.DS_Store
+Thumbs.db
