@@ -62,7 +62,7 @@ def startup_event():
     
     base_dir = "ml_artifacts"
     try:
-        model = load_model(os.path.join(base_dir, "fraud_detector_ae.h5"), compile=False)
+        model = load_model(os.path.join(base_dir, "fraud_detector_ae.keras"), compile=False)
         with open(os.path.join(base_dir, "amount_scaler.pkl"), "rb") as f:
             scaler = pickle.load(f)
         with open(os.path.join(base_dir, "optimal_threshold.txt"), "r") as f:
