@@ -73,6 +73,11 @@ def startup_event():
     except Exception as e:
         print(f"[ERROR] Failed to load artifacts: {e}")
 
+@app.get("/")
+def read_root():
+    """Health check for Render deployment"""
+    return {"status": "TransactSecure API is running successfully."}
+
 # Live Stream Endpoints
 @app.get("/stream")
 def get_random_transaction():

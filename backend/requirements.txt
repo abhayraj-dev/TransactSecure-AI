@@ -2,7 +2,8 @@ fastapi
 uvicorn
 numpy
 pandas
-tensorflow
+tensorflow>=2.16.1
+keras>=3.0.0
 scikit-learn
 pymongo
 python-dotenv
