@@ -74,6 +74,27 @@ def get_random_transaction():
     
     return {"features": features, "actual_class": actual_class}
 
+# Force a Fraud Transaction 
+@app.get("/stream/fraud")
+def get_guaranteed_fraud():
+    """Specifically hunts down a known fraud case for demo purposes."""
+    if test_data is None:
+        raise HTTPException(status_code=500, detail="Test data not loaded.")
+    
+    # Filter the dataset for ONLY fraud cases
+    try:
+        fraud_cases = test_data[test_data['Class'] == 1]
+        if len(fraud_cases) == 0:
+            raise ValueError("No fraud cases found.")
+        row = fraud_cases.sample(1).iloc[0]
+        features = row[['V' + str(i) for i in range(1, 29)] + ['Amount']].tolist()
+        return {"features": features, "actual_class": 1}
+    except:
+        # Fallback: Generate a massively anomalous synthetic transaction
+        synthetic_features = [random.uniform(5.0, 15.0) for _ in range(28)] # Massive deviations
+        synthetic_features.append(4500.00) # Massive amount
+        return {"features": synthetic_features, "actual_class": 1}
+
 # The XAI Analysis Endpoint
 @app.post("/analyze")
 def analyze_transaction(data: TransactionData):
