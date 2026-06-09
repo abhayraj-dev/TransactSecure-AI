@@ -30,12 +30,15 @@ const CustomTooltip = ({ active, payload }) => {
 
 export default function App() {
   const [logs, setLogs] = useState([]);
+  const [historyLogs, setHistoryLogs] = useState([]); // Holds MongoDB Data
+  const [activeTab, setActiveTab] = useState('live'); // Controls the UI Toggle
+  
   const [isStreaming, setIsStreaming] = useState(false);
   const [activeThreat, setActiveThreat] = useState(null);
-  const [feedInterval, setFeedInterval] = useState(1500); // Default 1.5s
+  const [feedInterval, setFeedInterval] = useState(1500); 
   const streamRef = useRef(null);
 
-
+  // Live Feed
   const processNextTransaction = async () => {
     try {
       const streamRes = await fetch('http://127.0.0.1:8000/stream');
@@ -66,7 +69,7 @@ export default function App() {
     }
   };
 
-  //Attack Injector 
+  // Attack Injector
   const injectFraudAttack = async () => {
     try {
       const streamRes = await fetch('http://127.0.0.1:8000/stream/fraud');
@@ -95,7 +98,25 @@ export default function App() {
     }
   };
 
+  // MongoDB History Fetcher
+  const fetchHistory = async () => {
+    try {
+      const res = await fetch('http://127.0.0.1:8000/history');
+      const data = await res.json();
+      setHistoryLogs(data);
+    } catch (error) {
+      console.error("Failed to fetch history:", error);
+    }
+  };
 
+  // Trigger history fetch when the user switches to the Audit tab
+  useEffect(() => {
+    if (activeTab === 'audit') {
+      fetchHistory();
+    }
+  }, [activeTab]);
+
+  
   useEffect(() => {
     if (isStreaming) {
       streamRef.current = setInterval(processNextTransaction, feedInterval);
@@ -117,7 +138,6 @@ export default function App() {
         </div>
         
         <div className="flex items-center gap-6">
-          {/* Feed Rate Slider */}
           <div className="hidden lg:flex items-center gap-3 bg-[#0a0b10] px-4 py-2 border border-white/10">
             <Activity className="w-4 h-4 text-slate-500" />
             <span className="text-[10px] text-slate-500 font-mono tracking-widest uppercase">Feed Rate</span>
@@ -157,46 +177,68 @@ export default function App() {
       {/* MAIN DASHBOARD */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* LEFT: Live Transaction Gateway */}
+        {/* LEFT: Dashboard Feed / Audit Log */}
         <div className="lg:col-span-4 flex flex-col h-[700px]">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[11px] text-slate-400 tracking-[0.2em] uppercase font-mono border-l-2 border-emerald-500 pl-3">
+          
+          {/* Tabs */}
+          <div className="flex border-b border-white/10 mb-4 font-mono text-[11px] tracking-widest uppercase">
+            <button 
+              onClick={() => setActiveTab('live')}
+              className={`pb-3 px-4 transition-all ${activeTab === 'live' ? 'text-emerald-500 border-b-2 border-emerald-500' : 'text-slate-600 hover:text-slate-400'}`}
+            >
               Live Gateway Feed
-            </h2>
-            <span className="text-[10px] text-slate-600 font-mono">STATUS: {isStreaming ? <span className="text-emerald-500 animate-pulse">ACTIVE</span> : 'STANDBY'}</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('audit')}
+              className={`pb-3 px-4 transition-all ${activeTab === 'audit' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-slate-600 hover:text-slate-400'}`}
+            >
+              Database Audit Log
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between mb-4 pl-3 border-l-2 border-slate-700">
+            <span className="text-[10px] text-slate-600 font-mono">
+              {activeTab === 'live' ? 'REAL-TIME MEMORY' : 'MONGODB ATLAS CLUSTER'}
+            </span>
+            {activeTab === 'live' && (
+               <span className="text-[10px] text-slate-600 font-mono">
+                 STATUS: {isStreaming ? <span className="text-emerald-500 animate-pulse">ACTIVE</span> : 'STANDBY'}
+               </span>
+            )}
           </div>
           
+          {/* Dynamic Feed Content */}
           <div className="overflow-y-auto flex-1 pr-2 space-y-2 custom-scrollbar">
-            {logs.length === 0 && (
+            {activeTab === 'live' && logs.length === 0 && (
               <div className="h-full flex items-center justify-center border border-white/5 bg-[#0a0b10] border-dashed">
                 <p className="text-slate-600 text-xs font-mono tracking-widest uppercase">Awaiting Data...</p>
               </div>
             )}
             
-            {logs.map(log => (
+            {(activeTab === 'live' ? logs : historyLogs).map((log, index) => (
               <div 
-                key={log.id} 
-                onClick={() => log.isFraud && setActiveThreat(log)}
+                key={log.id || index} 
+                onClick={() => (log.isFraud || activeTab === 'audit') && setActiveThreat(log)}
                 className={`p-4 border font-mono transition-all group ${
-                  log.isFraud 
+                  (log.isFraud || activeTab === 'audit')
                     ? 'bg-[#1a0b10] border-red-900/50 cursor-pointer hover:border-red-500/50' 
                     : 'bg-[#0a0b10] border-white/5'
                 }`}
               >
                 <div className="flex justify-between items-start mb-3">
-                  <span className="text-[10px] text-slate-500">{log.time}</span>
-                  {log.isFraud ? (
+                  <span className="text-[10px] text-slate-500">{log.timestamp || log.time}</span>
+                  {(log.isFraud || activeTab === 'audit') ? (
                     <span className="text-[10px] tracking-wider font-bold text-red-500 border border-red-500/30 px-2 py-0.5 bg-red-500/10">BLOCKED</span>
                   ) : (
                     <span className="text-[10px] tracking-wider text-emerald-500">APPROVED</span>
                   )}
                 </div>
                 <div className="flex justify-between items-end">
-                  <span className="text-xl text-white font-light">${log.amount.toFixed(2)}</span>
+                  <span className="text-xl text-white font-light">${(log.amount || log.transaction_amount).toFixed(2)}</span>
                   <div className="text-right">
                     <span className="block text-[9px] text-slate-600 uppercase tracking-widest mb-0.5">Risk Score</span>
-                    <span className={`text-xs ${log.isFraud ? 'text-red-400' : 'text-slate-400'}`}>
-                      {log.score.toFixed(4)}
+                    <span className={`text-xs ${(log.isFraud || activeTab === 'audit') ? 'text-red-400' : 'text-slate-400'}`}>
+                      {(log.score || log.risk_score).toFixed(4)}
                     </span>
                   </div>
                 </div>
@@ -234,14 +276,14 @@ export default function App() {
                   <ShieldAlert className="w-4 h-4" /> Critical Anomaly Intercepted
                 </h3>
                 <p className="text-xs text-slate-400 font-mono leading-relaxed border-l border-red-900/50 pl-4 py-1">
-                  Transaction of <span className="text-white">${activeThreat.amount.toFixed(2)}</span> flagged with risk score <span className="text-white">{activeThreat.score.toFixed(4)}</span> (Threshold: 4.84). <br/>
+                  Transaction of <span className="text-white">${(activeThreat.amount || activeThreat.transaction_amount).toFixed(2)}</span> flagged with risk score <span className="text-white">{(activeThreat.score || activeThreat.risk_score).toFixed(4)}</span> (Threshold: 4.84). <br/>
                   The deep autoencoder isolated the following latent features as mathematical drivers:
                 </p>
               </div>
 
               <div className="flex-1 w-full min-h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={activeThreat.anomalies} layout="vertical" margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
+                  <BarChart data={activeThreat.anomalies || activeThreat.top_anomalies} layout="vertical" margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
                     <XAxis type="number" stroke="#334155" tick={{ fill: '#475569', fontSize: 10, fontFamily: 'monospace' }} />
                     <YAxis dataKey="feature" type="category" stroke="#334155" width={60} tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'monospace' }} />
                     <Tooltip content={<CustomTooltip />} cursor={{fill: '#ffffff05'}} />
