@@ -41,10 +41,10 @@ export default function App() {
   // Live Feed
   const processNextTransaction = async () => {
     try {
-      const streamRes = await fetch('http://127.0.0.1:8000/stream');
+      const streamRes = await fetch('https://transactsecure-ai-backend.onrender.com/stream');
       const streamData = await streamRes.json();
 
-      const analyzeRes = await fetch('http://127.0.0.1:8000/analyze', {
+      const analyzeRes = await fetch('https://transactsecure-ai-backend.onrender.com/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ features: streamData.features })
@@ -72,10 +72,10 @@ export default function App() {
   // Attack Injector
   const injectFraudAttack = async () => {
     try {
-      const streamRes = await fetch('http://127.0.0.1:8000/stream/fraud');
+      const streamRes = await fetch('https://transactsecure-ai-backend.onrender.com/stream/fraud');
       const streamData = await streamRes.json();
 
-      const analyzeRes = await fetch('http://127.0.0.1:8000/analyze', {
+      const analyzeRes = await fetch('https://transactsecure-ai-backend.onrender.com/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ features: streamData.features })
@@ -101,7 +101,7 @@ export default function App() {
   // MongoDB History Fetcher
   const fetchHistory = async () => {
     try {
-      const res = await fetch('http://127.0.0.1:8000/history');
+      const res = await fetch('https://transactsecure-ai-backend.onrender.com/history');
       const data = await res.json();
       setHistoryLogs(data);
     } catch (error) {
