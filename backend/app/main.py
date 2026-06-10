@@ -4,7 +4,8 @@ from pydantic import BaseModel
 from typing import List
 import numpy as np
 import pandas as pd
-from tensorflow.keras.models import load_model
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Dense
 import pickle
 import os
 import random
@@ -62,7 +63,19 @@ def startup_event():
     
     base_dir = "ml_artifacts"
     try:
-        model = load_model(os.path.join(base_dir, "fraud_detector_ae.keras"), compile=False)
+        print("[System] Hardcoding AI architecture to bypass Keras bugs...")
+        # 1. Manually build the exact same Autoencoder architecture
+        input_layer = Input(shape=(29,))
+        encoder = Dense(14, activation="tanh")(input_layer)
+        encoder = Dense(7, activation="relu")(encoder)
+        decoder = Dense(14, activation="tanh")(encoder)
+        decoder = Dense(29, activation="linear")(decoder)
+        model = Model(inputs=input_layer, outputs=decoder)
+
+        print("[System] Injecting raw mathematical weights...")
+        # 2. Inject the weights matrix directly
+        weights_path = os.path.join(base_dir, "model_weights.weights.h5")
+        model.load_weights(weights_path)
         with open(os.path.join(base_dir, "amount_scaler.pkl"), "rb") as f:
             scaler = pickle.load(f)
         with open(os.path.join(base_dir, "optimal_threshold.txt"), "r") as f:
